@@ -9,13 +9,12 @@ import QtMultimedia
 
 App {
 
-
-     SoundEffect{
-       source: "../sounds/electric.wav"
-       id: beep
+      MediaPlayer{
+          audioOutput: AudioOutput {}
+          source: "../sounds/popcorn.wav"
+          id: beep
           
-      }
-
+    }
 
 
 
@@ -73,6 +72,7 @@ App {
 
 
   Navigation {
+
     id: "navegacao"
     navigationMode: navigationModeTabs
 
@@ -119,7 +119,7 @@ App {
 
 
           }
-          ListView {
+      ListView {
         anchors.fill: parent
         model: ListModel {
             id: listModel
@@ -127,29 +127,30 @@ App {
 
         delegate: Item {
             width: parent.width
-            height: 150
+            height: 200
 
             Rectangle {
                 width: parent.width
-                height: 150
+                height: 200
                 color: "black"
 
                 Text {
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: "data: "+model.title
                     color: "gray"
-                    font: robotoBold.font
+                    font.family: robotoBold.font
+                    font.pixelSize: 28
                 }
 
                 Text {
                     anchors.verticalCenter: parent.verticalCenter 
                     anchors.verticalCenterOffset: 5
-
                     text: model.body
-
-                    font: robotoBold.font
+                    font.family: robotoBold.font
+                    font.pixelSize: 20
                     color: "gray"
                 }
+              
                 Rectangle{
                   width: parent.width 
                   height: 0.5
@@ -157,6 +158,15 @@ App {
                   anchors.bottom: parent.bottom
                 }
             }
+        }IconButton {
+          iconType: IconType.trash
+          onClicked:{
+            storage.clearValue("horarios-inicio")
+            storage.clearValue("horarios-fim")
+            storage.clearValue("distancias")
+            storage.clearValue("datas-corrida")
+            listModel.clear()
+          }
         }
     }
         }
@@ -170,7 +180,6 @@ App {
 
       AppPage{
         title: "começar"
-
 
 
       AppMap {
@@ -270,8 +279,9 @@ App {
       
     Timer {
         property int repIndex
-        property int tempoTotal
+        property double tempoTotal
         property int firstIndex:0
+        property int contador:0
         id: timer
         interval: 1000; running:false; repeat: true
         onTriggered:{
@@ -280,7 +290,7 @@ App {
           var horas = time.text.substring(0,2)
           var minutos = time.text.substring(3,5)
           var segundos = time.text.substring(6,8)
-          var paceStatus = 0
+          var paceStatus = parseFloat(pace.text)
 
           var savedReps = storage.getValue("listaRpModelo")
           if(savedReps !== undefined){
@@ -347,16 +357,16 @@ App {
             }else{
               if(repsParse[repIndex].includes("rápido")){
                   map.distanciaZerar = map.distanciaTotal
-                  ativo.text = parseInt(repsParse[repIndex]) + " min ritmo  rápido"
+                  ativo.text = parseFloat(repsParse[repIndex]) + " min ritmo  rápido"
                 }else if(repsParse[repIndex].includes("moderado")){
                   map.distanciaZerar = map.distanciaTotal
-                  ativo.text = parseInt(repsParse[repIndex]) + " min ritmo moderado"
+                  ativo.text = parseFloat(repsParse[repIndex]) + " min ritmo moderado"
                 }else if(repsParse[repIndex].includes("lento")){
                    map.distanciaZerar = map.distanciaTotal
-                   ativo.text = parseInt(repsParse[repIndex]) + " min ritmo lento"
+                   ativo.text = parseFloat(repsParse[repIndex]) + " min ritmo lento"
 
                 }
-              if(parseInt(repsParse[repIndex]) <= tempoTotal){
+              if(parseFloat(repsParse[repIndex]) <= tempoTotal){
               tempoTotal = 0
               repIndex++
               firstIndex = 0
@@ -368,8 +378,8 @@ App {
 
                if(repsParse[repIndex].includes("rápido")){
                   map.distanciaZerar = map.distanciaTotal
-                  ativo.text = parseInt(repsParse[repIndex]) + " min ritmo rápido"           
-                  if(parseInt(repsParse[repIndex]) <= tempoTotal){
+                  ativo.text = parseFloat(repsParse[repIndex]) + " min ritmo rápido"           
+                  if(parseFloat(repsParse[repIndex]) <= tempoTotal){
                   tempoTotal = 0
                   repIndex++
                   beep.play()
@@ -377,8 +387,8 @@ App {
                   }
                 }else if(repsParse[repIndex].includes("moderado")){
                   map.distanciaZerar = map.distanciaTotal
-                  ativo.text = parseInt(repsParse[repIndex]) + " min ritmo moderado"         
-                  if(parseInt(repsParse[repIndex]) <= tempoTotal){
+                  ativo.text = parseFloat(repsParse[repIndex]) + " min ritmo moderado"         
+                  if(parseFloat(repsParse[repIndex]) <= tempoTotal){
                   tempoTotal = 0
                   repIndex++
                   beep.play()
@@ -386,8 +396,8 @@ App {
                 }else if(repsParse[repIndex].includes("lento")){
                   
                   map.distanciaZerar = map.distanciaTotal
-                  ativo.text = parseInt(repsParse[repIndex]) + " min ritmo lento"
-                  if(parseInt(repsParse[repIndex]) <= tempoTotal){
+                  ativo.text = parseFloat(repsParse[repIndex]) + " min ritmo lento"
+                  if(parseFloat(repsParse[repIndex]) <= tempoTotal){
                   tempoTotal = 0
                   repIndex++
                   beep.play()
@@ -414,17 +424,21 @@ App {
             ativo.text = "treino livre"
           }
           segundos++
+          tempoTotal+= 0.016
           if(segundos >=60){
             segundos = 0
             minutos++
-            tempoTotal++
           }
           if(minutos >=60){
             minutos = 0
             horas++
 
           }
-          paceStatus = ((segundos / 60) + (minutos) + (horas * 60)) /  (map.distanciaTotal / 1000)
+          
+          paceStatus += ((segundos / 60) + (minutos) + (horas * 60)) /  (map.distanciaTotal / 1000)
+          if(contador == 5){
+            paceStatus /=5
+          }
           if(horas < 10){
           horas = horas.toString().padStart(2, '0')
           }
@@ -435,10 +449,16 @@ App {
           segundos = segundos.toString().padStart(2, '0')
           }
       
-          if(paceStatus >=2 && paceStatus <=100){
+          if(paceStatus >=2 && paceStatus <=100 && contador == 5){
             pace.text = paceStatus.toFixed(2)+ " min/km"
-          }else{
+            
+          }if(paceStatus < 2 && paceStatus > 100 && contador == 5 || (paceStatus == Infinity && contador == 5) || (paceStatus == NaN && contador == 5)){
             pace.text = "0 min/km"
+            paceStatus = 0
+          }
+          if(contador == 5){
+            paceStatus = 0
+            contador = 0
           }
           time.text = horas+":"+minutos+":"+segundos
 
@@ -484,7 +504,7 @@ App {
       scale: 2
       onClicked:{
 
-        beep.play()
+
         timer.running = true
         if(stopRep.visible = false){
         var horariosInicio = storage.getValue("horarios-inicio")
@@ -499,12 +519,14 @@ App {
         horariosParse.push(horarioFormatado);
         storage.setValue("horarios-inicio",JSON.stringify(horariosParse))
 
+        }else{
+         map.coordinates = []
+         map.distanciaTotal = 0
         }
        
         pauseRep.visible = true
         stopRep.visible = true
-        map.coordinates = []
-        map.distanciaTotal = 0
+
         resumeRep.visible = false
         map.lon1 = map.userPosition.coordinate.longitude
         map.lat1 = map.userPosition.coordinate.latitude 
@@ -596,6 +618,7 @@ App {
 
     }
     AppButton {
+      
       text: "iniciar"
       id: iniciarRep
       anchors.bottom: parent.bottom
@@ -635,8 +658,7 @@ App {
       
     }
     }
-
-      
+     
     }
     NavigationItem {
       title: "treinamentos"
@@ -717,6 +739,7 @@ App {
         height: dp(50)
         anchors.topMargin: dp(160)
         radius: dp(20)
+        fontFamily: robotoBold.font 
         text: "adicionar treinamento"
         onClicked: {
         if(parseInt(inputReps.text) >= 1 && parseInt(inputReps.text) <=100){
@@ -779,7 +802,7 @@ Popup {
         anchors.bottomMargin: dp(50)
         Column {
             anchors.top: parent.top
-            anchors.topMargin: dp(50)
+            anchors.topMargin: dp(40)
             width: parent.width
 
             Repeater {
@@ -788,30 +811,30 @@ Popup {
 
                 delegate: Item {
                     width: parent.width
-                    height: dp(50)
+                    height: dp(70)
 
                     AppTextField {
                         id: irmao
-                        width: parent.width / 2.5
+                        width: parent.width / 2.3
                         placeholderColor: "gray"
-                        height: dp(20)
+                        height: dp(30)
                         textColor: "white"
                         underlineColor: "white"
-                        placeholderText: "tempo em minutos"
+                        placeholderText: "quantos minutos"
                         font: roboto.font
                     }
 
                     AppSwitch {
                         width: parent.width / 7
                         anchors.left: irmao.right
-                        height: dp(20)
+                        height: dp(30)
                         id: trocar
                         onToggled: {
                             if (trocar.checked) {
-                                irmao.placeholderText = "distancia em metros"
+                                irmao.placeholderText = "quantos metros"
                                 combo.visible = false
                             } else {
-                                irmao.placeholderText = "tempo em minutos"
+                                irmao.placeholderText = "quantos minutos"
                                 combo.visible = true
                             }
                         }
@@ -819,10 +842,11 @@ Popup {
 
                     ComboBox {
                         id: combo
-                        width: parent.width / 3.5
+                        width: parent.width / 3
                         model: ["rápido", "moderado", "lento"]
                         visible: true
-                        height: dp(20)
+                        height: dp(30)
+                        font.pixelSize: 15
                         anchors.right: parent.right
                         anchors.top: irmao.top
                     }
@@ -836,6 +860,7 @@ Popup {
         width: parent.width
         height: dp(40)
         radius: dp(20)
+        fontFamily: robotoBold.font 
         text: "Salvar e selecionar"
         backgroundColor: "gray"
         onClicked: {
@@ -854,7 +879,7 @@ Popup {
 
                 console.log("Item " + i + ": irmao =", irmaoValue, "trocar =", trocarValue, "combo =", comboValue);
             if(trocarValue == false){
-              if(parseInt(irmaoValue)){
+              if(parseFloat(irmaoValue)){
                 salvarDados.push(irmaoValue+comboValue)
 
               }
@@ -877,11 +902,12 @@ Popup {
             
         }
     }
-}
+}   
     AppListView {
       id: listaEx
       anchors.top: retangulo2.bottom 
       width: retangulo2.width
+      anchors.bottom: parent.bottom
       model: ListModel {}
       Component.onCompleted:{
             try{
