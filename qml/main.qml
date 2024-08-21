@@ -326,7 +326,7 @@ App {
               time.text = "00:00:00"
               distance.text = "0m"
               ativo.text = ""
-              pace.text = ""
+              pace.text = "0 min/km"
               map.lon1 = 0 
               map.lat1 = 0
               pauseRep.visible = false
@@ -468,7 +468,7 @@ App {
     AppText{
       scale: 1.8 
       id: pace 
-      text: "" 
+      text: "0 min/km" 
       color:"black"
       font: robotoBold.font
       anchors.horizontalCenter: parent.horizontalCenter
@@ -607,7 +607,7 @@ App {
               time.text = "00:00:00"
               distance.text = "0m"
               ativo.text = ""
-              pace.text = ""
+              pace.text = "0 min/km"
               map.lon1 = 0 
               map.lat1 = 0
 
